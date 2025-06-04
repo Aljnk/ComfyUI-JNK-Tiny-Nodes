@@ -2,8 +2,7 @@ from .nodes import *
 
 NODE_CLASS_MAPPINGS = {
     ## Models
-    "Load Diffusion Model with Name JNK":LoadModelName_Diff_JNK,
-    "Load UNet Model with Name JNK":LoadModelName_Unet_JNK,
+    "Load UNet Model with Name JNK":LoadModelName_Diff_JNK,
     "Load Checkpoint Model with Name JNK":LoadModelName_Chpt_JNK,
     "Load LoRA with Name JNK":LoadLoRAName_JNK,
     ## Video
@@ -24,7 +23,7 @@ NODE_CLASS_MAPPINGS = {
     "Get Text From List by Index JNK":GetTextFromList_JNK,
     "Text Saver JNK":TextSaver_JNK,
     "Get Substring JNK":GetSubstring_JNK,
-    "Model Name to Key JNK":Model2Key_JNK,
+    "Text to Key JNK":Model2Key_JNK,
     "Text to MD5 JNK":Text2MD5_JNK,
     "Join Strings JNK":JoinStrings_JNK,
     "Get Timestamp JNK":GetTimestamp_JNK,
@@ -62,7 +61,7 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "GetTextFromList_JNK":"Get Text From List by Index",
     "TextSaver_JNK":"Text Save",
     "GetSubstring_JNK":"Get Substring",
-    "Model2Key_JNK":"Model Name to Key",
+    "Model2Key_JNK":"Text to Key",
     "Text2MD5_JNK":"Text to MD5",
     "JoinStrings_JNK":"Join Strings",
     "GetTimestamp_JNK":"Get Timestamp",

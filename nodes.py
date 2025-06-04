@@ -51,20 +51,6 @@ class LoadModelName_Diff_JNK:
         filename = os.path.splitext(os.path.basename(model))[0]
         return (model, filename)
 
-class LoadModelName_Unet_JNK:
-    def __init__(self): pass
-
-    @classmethod
-    def INPUT_TYPES(s):return {"required": {"model": (folder_paths.get_filename_list("unet"),),}}
-    RETURN_TYPES = (folder_paths.get_filename_list("unet"), "STRING")
-    RETURN_NAMES = ("model", "name",)
-    FUNCTION = "load_model_name"
-    CATEGORY = "🔧 JNK"
-    
-    def load_model_name(self, model):
-        filename = os.path.splitext(os.path.basename(model))[0]
-        return (model, filename)
-
 class LoadModelName_Chpt_JNK:
     def __init__(self): pass
 
