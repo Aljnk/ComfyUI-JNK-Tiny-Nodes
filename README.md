@@ -39,13 +39,13 @@ pip install pygame
 - **Load Checkpoint Model with Name** - Return components of a checkpoint model and its name. The name can be used when saving files to understand which model was used in creation.
 - **Load LoRA with Name** - Return LoRA model and LoRA name. The name can be used when saving files to understand which LoRA was used in creation.
 
-<div align="center" style="max-height:180px;"><img src="images/models.jpg" alt="Model Nodes" /></div>
+<div align="center"><img src="images/models.jpg" alt="Model Nodes" width="830" /></div>
 
 ### Video
 - **Save Frame** - Save individual frames with sequential numbering. Useful for extracting specific frames from video for processing.
 - **Save Video Images** - Batch save multiple images as numbered sequence. Allows decomposing video into images, modifying some frames, then reassembling into video.
 
-<div align="center" style="max-height:200px;"><img src="images/videos.jpg" alt="Video Nodes" /></div>
+<div align="center"><img src="images/videos.jpg" alt="Video Nodes" width="450" /></div>
 
 ### Image
 - **Save Static Image** - Save images with quality control, metadata, and an option to skip existing files. Allows saving images using filesystem paths.
@@ -57,12 +57,12 @@ pip install pygame
 - **Get One Alpha Layer** - Extract the largest alpha region from images.
 - **Get All Alpha Layers** - Extract all significant alpha regions while preserving smaller details.
 
-<div align="center" style="max-height:450px;"><img src="images/images.jpg" alt="Image Nodes" /></div>
+<div align="center"><img src="images/images.jpg" alt="Image Nodes" width="830" /></div>
 
 ### Upscale
 - **Topaz Photo Upscaler** - Integrate with Topaz Photo AI for professional upscaling with autopilot settings. Compression parameter controls PNG compression after upscaling. tpai_exe specifies path to folder containing tpai.exe file. For custom settings, configure AutoPilot mode in Topaz Photo AI preferences.
 
-<div align="center" style="max-height:170px;"><img src="images/upscalers.jpg" alt="Upscale Nodes" /></div>
+<div align="center"><img src="images/upscalers.jpg" alt="Upscale Nodes" width="370" /></div>
 
 ### Text
 - **Get Text From List by Index** - Extract specific text items from lists or string lists by index position.
@@ -73,21 +73,21 @@ pip install pygame
 - **Join Strings** - Concatenate multiple strings with custom delimiters. Text can be written directly in the node.
 - **Get Timestamp** - Generate current timestamp strings for file naming.
 
-<div align="center" style="max-height:320px;"><img src="images/texts.jpg" alt="Text Nodes" /></div>
+<div align="center"><img src="images/texts.jpg" alt="Text Nodes" width="830" /></div>
 
 ### Logic
 - **Switch Integer** - Convert ON/OFF states to 1/0 integers for conditional logic.
 - **Switch Index** - Convert ON/OFF states to 2/1 indices for node switching.
 - **Get Models** - Get model list by search key. In test mode, uses next model from list each run (very convenient for model testing). In work mode, uses only model from model_name or first in list.
 
-<div align="center" style="max-height:350px;"><img src="images/logic.jpg" alt="Logic Nodes" /></div>
+<div align="center"><img src="images/logic.jpg" alt="Logic Nodes" width="440" /></div>
 
 ### System
 - **Bridge All** - Simple bridge with main parameters.
 - **Queue Stop** - Stop processing with optional sound alerts and queue clearing.
 - **Create Folder** - Create directory by path programmatically.
 
-<div align="center" style="max-height:240px;"><img src="images/system.jpg" alt="System Nodes" /></div>
+<div align="center"><img src="images/system.jpg" alt="System Nodes" width="750" /></div>
 
 
 ## 📄 License
