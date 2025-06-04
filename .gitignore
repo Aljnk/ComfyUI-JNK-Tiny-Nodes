@@ -1,0 +1,17 @@
+# Python
+__pycache__/
+*.py[cod]
+
+# VS Code
+.vscode/
+
+# Images
+Thumbs.db
+
+# Virtual
+.env
+.venv
+venv/
+
+# Logs
+*.log
