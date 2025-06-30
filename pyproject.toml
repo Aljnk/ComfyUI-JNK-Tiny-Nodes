@@ -1,0 +1,16 @@
+[project]
+name = "jnk-tiny-nodes"
+description = "A collection of useful custom nodes for ComfyUI - image processing, text manipulation, and workflow automation."
+version = "1.0.0"
+license = {file = "LICENSE"}
+dependencies = ["opencv-python>=4.5.0", "pygame>=2.0.0"]
+
+[project.urls]
+Repository = "https://github.com/Aljnk/ComfyUI-JNK-Tiny-Nodes"
+#  Used by Comfy Registry https://registry.comfy.org
+
+[tool.comfy]
+PublisherId = "aljnk"
+DisplayName = "ComfyUI-JNK-Tiny-Nodes"
+Icon = ""
+includes = []
