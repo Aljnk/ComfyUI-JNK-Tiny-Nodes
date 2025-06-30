@@ -10,7 +10,7 @@ Repository = "https://github.com/Aljnk/ComfyUI-JNK-Tiny-Nodes"
 #  Used by Comfy Registry https://registry.comfy.org
 
 [tool.comfy]
-PublisherId = ""
+PublisherId = "aljnk"
 DisplayName = "ComfyUI-JNK-Tiny-Nodes"
 Icon = ""
 includes = []
