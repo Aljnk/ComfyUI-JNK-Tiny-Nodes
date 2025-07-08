@@ -94,13 +94,9 @@ pip install google-genai
 <div align="center"><img src="images/system.jpg" alt="System Nodes" width="750" /></div>
 
 ### API
-- **Ask Google Gemini** - Send text prompts and image to Google Gemini AI models. Supports RPM rate limiting, multiple models (gemini-2.5-flash, etc.), and multimodal inputs. Requires Gemini API key from Google AI Studio.
-
-
-### Text
 - **Ask Google Gemini** - Send a text prompt (with an optional image) to the Google Gemini AI model. When the RPM is greater than 0, the node will pause between requests to maximize request throughput while staying within rate limits. Get a [free API key](https://aistudio.google.com/apikey). [Available models](https://ai.google.dev/gemini-api/docs/models). [Free tier RPM limits](https://ai.google.dev/gemini-api/docs/rate-limits#free-tier).
 
-<div align="center"><img src="images/api.jpg" alt="API Nodes" width="200" /></div>
+<div align="center"><img src="images/api.jpg" alt="API Nodes" width="250" /></div>
 
 
 ## 📄 License
