@@ -35,6 +35,8 @@ NODE_CLASS_MAPPINGS = {
     "Bridge All JNK":BridgeAll_JNK,
     "Queue Stop JNK":QueueStop_JNK,
     "Create Folder JNK":CreateFolder_JNK,
+    ## API
+    "Ask Google Gemini JNK":AskGoogleGemini_JNK,
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
@@ -73,6 +75,8 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "BridgeAll_JNK":"Bridge All",
     "QueueStop_JNK":"Queue Stop",
     "CreateFolder_JNK":"Create Folder",
+    ## API
+    "AskGoogleGemini_JNK":"Ask Google Gemini",
 }
 
 __all__ = ["NODE_CLASS_MAPPINGS", "NODE_DISPLAY_NAME_MAPPINGS"]

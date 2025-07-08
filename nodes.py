@@ -1,6 +1,7 @@
 # Standard library imports
 import os
 import re
+import io
 import uuid
 import json
 import shutil
@@ -11,6 +12,7 @@ from typing import Any, Callable, Dict, List, Tuple, Union
 
 
 import time
+import math
 import subprocess
 from PIL import Image, ImageOps
 import json
@@ -19,13 +21,13 @@ import json
 import cv2
 import numpy as np
 import torch
+from google import genai
 from PIL import Image
 from PIL.PngImagePlugin import PngInfo
 
 # ComfyUI specific imports
 import folder_paths  # type: ignore[import]
 import server  # type: ignore[import]
-import comfy.samplers  # type: ignore[import]
 from comfy.model_management import InterruptProcessingException  # type: ignore[import]
 
 # Local application imports
@@ -137,7 +139,7 @@ class SaveVideoImages_JNK:
                 i = 255. * image.cpu().numpy()
                 img = Image.fromarray(np.clip(i, 0, 255).astype(np.uint8))
                 img.save(out_fname)
-        print('JNK Video Images Saved > ', frame_tot)
+        print(f"---JNK---> SaveVideoImages_JNK ---> Saved {frame_tot} images to {output_dir}")
         return ()
 
 ## Image
@@ -206,6 +208,7 @@ class SaveStaticImage_JNK:
             return {"ui": {"images": [{"filename": os.path.basename(preview_path), "subfolder": "", "type": "temp"}]}, "result": (success,)}
         
         except Exception:
+            print(f"---JNK---> SaveStaticImage_JNK ---> Error saving image: {file_path}")
             return {"ui": {"images": []}, "result": (success,)}
 
 class LoadImageWithCheck_JNK:
@@ -251,6 +254,7 @@ class LoadImageWithCheck_JNK:
                         image = torch.from_numpy(i)[None,]
                         results.append({"filename": os.path.basename(preview_path), "subfolder": "", "type": "temp"})
                 except Exception:
+                    print(f"---JNK---> LoadImageWithCheck_JNK ---> Error loading image: {image_path}")
                     image = empty_image
                     exists = False
                     index = 2
@@ -259,6 +263,7 @@ class LoadImageWithCheck_JNK:
 
             return {"ui": {"images": results}, "result": (image, exists, index)}
         except Exception:
+            print(f"---JNK---> LoadImageWithCheck_JNK ---> Error processing image: {image_path}")
             return (empty_image, False, 2)
 
 class ImageFilterLoader_JNK:
@@ -308,13 +313,15 @@ class ImageFilterLoader_JNK:
             if skip_img: return ([], self._cached_paths, total_files)
             return (self._cached_images, self._cached_paths, total_files)
         folder = Path(folder_path)
-        if not folder.is_dir(): raise Exception(f"Folder path {folder_path} does not exist.")
+        if not folder.is_dir():
+            raise Exception(f"---JNK---> ImageFilterLoader_JNK ---> Folder path {folder_path} does not exist.")
         sort_method_impl: Callable[[str], Union[int, str]]
         if sort_method == "numerical": sort_method_impl = self.numerical_sort
         elif sort_method == "alphabetical": sort_method_impl = self.alphabetical_sort
         else: raise ValueError(f"Unknown sort method {sort_method}")
         files = sorted(folder.glob(file_filter), key=sort_method_impl)
-        if not files: raise Exception(f"No files found in {folder_path} matching filter {file_filter}")
+        if not files:
+            raise Exception(f"---JNK---> ImageFilterLoader_JNK ---> No files found in {folder_path} matching filter {file_filter}")
         images = []
         file_paths = []
         for file in files:
@@ -374,7 +381,7 @@ class StrokeImage_JNK:
                     m = 1 - m
                 l_masks.append(tensor2pil(torch.unsqueeze(m, 0)).convert('L'))
         if len(l_masks) == 0:
-            print(f"Error: {self.NODE_NAME} skipped, because the available mask is not found.")
+            print(f"---JNK---> StrokeImage_JNK ---> Error: {self.NODE_NAME} skipped, because the available mask is not found.")
             return (background_image,)
 
         max_batch = max(len(b_images), len(l_images), len(l_masks))
@@ -393,7 +400,7 @@ class StrokeImage_JNK:
 
             if _mask.size != _layer.size:
                 _mask = Image.new('L', _layer.size, 'white')
-                print(f"Warning: {self.NODE_NAME} mask mismatch, dropped!")
+                print(f"---JNK---> StrokeImage_JNK ---> Warning: {self.NODE_NAME} mask size mismatch, using white mask!")
 
             inner_mask = expand_mask(image2mask(_mask), inner_stroke, blur)
             outer_mask = expand_mask(image2mask(_mask), outer_stroke, blur)
@@ -404,7 +411,7 @@ class StrokeImage_JNK:
 
             ret_images.append(pil2tensor(_canvas))
 
-        print(f"{self.NODE_NAME} Processed {len(ret_images)} image(s).")
+        print(f"---JNK---> StrokeImage_JNK ---> {self.NODE_NAME} finished processing {max_batch} image(s).")
         return (torch.cat(ret_images, dim=0),)
 
 class AlphaImageNode_JNK:
@@ -564,9 +571,9 @@ class GetAlphaLayers_JNK:
             full_rgba = torch.cat([image[..., :3], mask_for_rgba], dim=-1)
             return full_rgb, final_mask_tensor, full_rgba
         except Exception as e:
-            print(f"----------------------> Error in processing: {str(e)}")
             import traceback
-            print("----------------------> Traceback:", traceback.format_exc())
+            print(f"---JNK---> GetAlphaLayers_JNK ---> Error: {str(e)}")
+            print(f"---JNK---> GetAlphaLayers_JNK ---> Traceback:", traceback.format_exc())
             empty_rgb = torch.ones_like(image)
             empty_mask = torch.zeros_like(mask)
             empty_rgba = torch.zeros((1, *image.shape[:-1], 4))
@@ -607,15 +614,13 @@ class GetAlphaLayers_JNK:
                 all_masks.append(mask_out)
                 all_rgba.append(rgba)
             except Exception as e:
-                print(f"----------------------> Error processing image {i}: {str(e)}")
                 import traceback
-                print("----------------------> Traceback:", traceback.format_exc())
-                
+                print(f"---JNK---> GetAlphaLayers_JNK ---> Error: {str(e)}")
+                print(f"---JNK---> GetAlphaLayers_JNK ---> Traceback: {traceback.format_exc()}")
                 # Use empty tensors on error
                 empty_rgb = torch.ones_like(img)
                 empty_mask = torch.zeros_like(msk)
                 empty_rgba = torch.zeros((1, *img.shape[:-1], 4))
-                
                 all_rgb.append(empty_rgb)
                 all_masks.append(empty_mask)
                 all_rgba.append(empty_rgba)
@@ -713,9 +718,9 @@ class GetAllAlphaLayers_JNK:
             
             return full_rgb, final_mask_tensor, full_rgba
         except Exception as e:
-            print(f"----------------------> Error in processing: {str(e)}")
+            print(f"---JNK---> GetAllAlphaLayers_JNK ---> Error: {str(e)}")
             import traceback
-            print("----------------------> Traceback:", traceback.format_exc())
+            print(f"---JNK---> GetAllAlphaLayers_JNK ---> Traceback: {traceback.format_exc()}")
             empty_rgb = torch.ones_like(image)
             empty_mask = torch.zeros_like(mask)
             empty_rgba = torch.zeros((1, *image.shape[:-1], 4))
@@ -756,10 +761,9 @@ class GetAllAlphaLayers_JNK:
                 all_masks.append(mask_out)
                 all_rgba.append(rgba)
             except Exception as e:
-                print(f"----------------------> Error processing image {i}: {str(e)}")
+                print(f"---JNK---> GetAllAlphaLayers_JNK ---> Error processing image {i}: {str(e)}")
                 import traceback
-                print("----------------------> Traceback:", traceback.format_exc())
-                
+                print(f"---JNK---> GetAllAlphaLayers_JNK ---> Traceback:", traceback.format_exc())
                 # Use empty tensors on error
                 empty_rgb = torch.ones_like(img)
                 empty_mask = torch.zeros_like(msk)
@@ -854,7 +858,9 @@ class TopazPhotoAI_JNK:
         output_file = os.path.join(target_dir, os.path.basename(img_file))
         if not os.path.exists(output_file):shutil.copy(img_file, output_file)
         try:autopilot_settings = self.get_settings(p_tpai.stdout)
-        except Exception as e:autopilot_settings = "{}"
+        except Exception as e:
+            print(f"---JNK---> TopazPhotoAI_JNK ---> Error: {str(e)}")
+            autopilot_settings = "{}"
         return (output_file, autopilot_settings)
 
     def upscale_image(self, images, compression=0, format='png', tpai_exe=None):
@@ -1012,7 +1018,7 @@ class Text2MD5_JNK:
     CATEGORY = "🔧 JNK"
 
     def calculate_md5(self, text):
-        print(f"----------------------> [JNK MD5] Calculating MD5 for: {text}")
+        print(f"---JNK---> [JNK MD5] Calculating MD5 for: {text[:50]}... (length: {len(text)})")
         md5_hash = hashlib.md5(text.encode()).hexdigest()
         return (md5_hash,)
 
@@ -1231,4 +1237,75 @@ class CreateFolder_JNK:
             if directory:os.makedirs(directory, exist_ok=True)
             return {"ui": {"text": f"Directory created: {directory}"}}
         except Exception as e:
+            print(f"---JNK---> CreateFolder ---> Error: {str(e)}")
             return {"ui": {"text": f"Error: {str(e)}"}}
+
+class AskGoogleGemini_JNK:
+    def __init__(self): pass
+    
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "api_key": ("STRING", {"default": ""}),
+                "model": ("STRING", {"default": "gemini-2.5-flash"}),
+                "prompt": ("STRING", {"multiline": True, "default": ""}),
+                "rpm": ("INT", {"default": 0, "min": 0, "max": 1000}),
+            },
+            "optional": {
+                "image": ("IMAGE", {"default": None}),
+            }
+        }
+    
+    RETURN_TYPES = ("STRING",)
+    RETURN_NAMES = ("response",)
+    FUNCTION = "ask_gemini"
+    CATEGORY = "🔧 JNK"
+
+    def tensor_to_bytes(self, tensor):
+        if len(tensor.shape) == 4: tensor = tensor.squeeze(0)
+        tensor = tensor.detach().cpu().numpy()
+        if tensor.dtype != np.uint8: tensor = (tensor * 255).astype(np.uint8)
+        pil_image = Image.fromarray(tensor)
+        img_byte_arr = io.BytesIO()
+        pil_image.save(img_byte_arr, format='PNG')
+        return img_byte_arr.getvalue()
+
+    def get_temp_file_path(self, model):
+        temp_dir = os.path.join(os.path.dirname(__file__), "temp")
+        if not os.path.exists(temp_dir):os.makedirs(temp_dir)
+        safe_model_name = model.replace("-", "_").replace(".", "_")
+        return os.path.join(temp_dir, f"jnk_gemini_last_request_{safe_model_name}.txt")
+
+    def get_last_request_time(self, model):
+        file_path = self.get_temp_file_path(model)
+        try: return float(open(file_path, 'r').read().strip()) if os.path.exists(file_path) else 0
+        except:print(f"---JNK---> AskGoogleGemini ---> Error (GLRT) ---> Unable to read temp file: {file_path}");return 0
+
+    def set_last_request_time(self, current_time, model):
+        file_path = self.get_temp_file_path(model)
+        try:
+            with open(file_path, 'w') as f:f.write(str(current_time))
+        except:print(f"---JNK---> AskGoogleGemini ---> Error (SLRT) ---> Unable to write temp file: {file_path}")
+
+    def handle_rpm_limit(self, rpm, model):
+        if rpm <= 0:return
+        time_to_wait = math.ceil(60 / rpm) + 0.1 - time.time() + self.get_last_request_time(model)
+        if time_to_wait > 0: print(f"---JNK---> AskGoogleGemini ---> RPM Pause ({time_to_wait:.2f} sec.)");time.sleep(time_to_wait)
+        self.set_last_request_time(time.time(), model)
+
+    def ask_gemini(self, api_key, model, prompt, rpm, image=None):
+        print(f"---JNK---> AskGoogleGemini ---> Started")
+        try:
+            self.handle_rpm_limit(rpm, model)
+            client = genai.Client(api_key=api_key)
+            contents = [prompt]
+            if image is not None:
+                print(f"---JNK---> AskGoogleGemini ---> Image added")
+                image_bytes = self.tensor_to_bytes(image)
+                image_part = genai.types.Part.from_bytes(data=image_bytes, mime_type='image/png')
+                contents.append(image_part)
+            response = client.models.generate_content(model=model, contents=contents)
+            print(f"---JNK---> AskGoogleGemini ---> Finished")
+            return (response.text,)
+        except Exception as e:print(f"---JNK---> AskGoogleGemini ---> Error (AG): {str(e)}");return (f"Error: {str(e)}",)
