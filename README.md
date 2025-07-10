@@ -5,6 +5,10 @@ A collection of useful custom nodes for ComfyUI - image processing, text manipul
 
 ## 📦 Installation
 
+You can access it directly from the ComfyUI Manager. Search for "JNK," click "Install," and then restart.
+
+OR
+
 ### Method 1: Git Clone (Recommended)
 ```bash
 cd ComfyUI/custom_nodes/
@@ -27,6 +31,9 @@ pip install google-genai
 
 
 ## 🔄 Changelog
+
+### v1.1.1 (July 10, 2025)
+- Added "Prepare Image for AI" node for optimizing images before sending to AI models (token saving)
 
 ### v1.1.0 (July 8, 2025)
 - Added "Ask Google Gemini" node for text and image AI processing
@@ -55,6 +62,7 @@ pip install google-genai
 - **Save Static Image** - Save images with quality control, metadata, and an option to skip existing files. Allows saving images using filesystem paths.
 - **Load Image if Exist** - Load images with existence check, returning a boolean status. Loads image by filesystem path and returns boolean to check if image was loaded.
 - **Image Filter Loader** - Batch load images from folders with filtering + returns number of found images and their paths. Loads images from a folder whose names contain the filter keyword.
+- **Prepare Image for AI** - Optimize images (reduce image size) to save tokens when using with "Ask Google Gemini" node for computer vision tasks.
 - **Stroke RGBA Image** - Add customizable stroke effects to RGBA images or by mask. Preserves alpha channel after stroking.
 - **Create RGBA Image** - Generate transparent or colored RGBA image. Useful for compositing images from different layers.
 - **Add Layer Overlay** - Composite layers with positioning, rotation and opacity control.

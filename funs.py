@@ -3,17 +3,28 @@ import numpy as np
 import scipy.ndimage
 from PIL import Image, ImageFilter
 import time
+import hashlib
+import io
 import pygame  # type: ignore[import]
 
 
 class AnyType(str): __eq__ = lambda self, __value: True; __ne__ = lambda self, __value: False
 
-def tensor2pil(img: torch.Tensor) -> Image.Image: return Image.fromarray(np.clip(255. * img.cpu().numpy().squeeze(), 0, 255).astype(np.uint8))
-def pil2tensor(img: Image.Image) -> torch.Tensor: return torch.from_numpy(np.array(img).astype(np.float32) / 255.0).unsqueeze(0)
-
+def tensor2pil(image: torch.Tensor) -> Image.Image: return Image.fromarray(np.clip(255. * image.cpu().numpy().squeeze(), 0, 255).astype(np.uint8))
+def pil2tensor(image: Image.Image) -> torch.Tensor: return torch.from_numpy(np.array(image).astype(np.float32) / 255.0).unsqueeze(0)
+def pil2hex(image: torch.Tensor) -> str: return hashlib.sha256(np.array(tensor2pil(image)).astype(np.uint16).tobytes()).hexdigest()
+def pil2mask(image: Image.Image) -> torch.Tensor: inp = np.array(image.convert("L")).astype(np.float32) / 255.0; mask = torch.from_numpy(inp); return 1.0 - mask
 def mask_invert(mask:torch.Tensor) -> torch.Tensor: return 1 - mask
-
 def subtract_mask(masks_a:torch.Tensor, masks_b:torch.Tensor) -> torch.Tensor: return torch.clamp(masks_a - masks_b, 0, 255)
+def RGB2RGBA(image:Image, mask:Image) -> Image:(R, G, B) = image.convert('RGB').split(); return Image.merge('RGBA', (R, G, B, mask.convert('L')))
+def tensor_to_bytes(tensor, quality=80):
+    if len(tensor.shape) == 4: tensor = tensor.squeeze(0)
+    tensor = tensor.detach().cpu().numpy()
+    if tensor.dtype != np.uint8: tensor = (tensor * 255).astype(np.uint8)
+    pil_image = Image.fromarray(tensor)
+    img_byte_arr = io.BytesIO()
+    pil_image.save(img_byte_arr, format='WEBP', quality=quality, method=6)
+    return img_byte_arr.getvalue()
 
 def play_sound(sound_type='normal'):
     try:
@@ -94,14 +105,9 @@ def expand_mask(mask:torch.Tensor, grow:int, blur:int) -> torch.Tensor:
     ret_mask = torch.cat(out, dim=0)
     return ret_mask
 
-def RGB2RGBA(image:Image, mask:Image) -> Image:
-    (R, G, B) = image.convert('RGB').split()
-    return Image.merge('RGBA', (R, G, B, mask.convert('L')))
 
 def resize_preview(image_pil, target_width):
-    if image_pil.width <= target_width:
-        return image_pil
-        
+    if image_pil.width <= target_width:return image_pil
     aspect_ratio = image_pil.width / image_pil.height
     new_height = int(target_width / aspect_ratio)
     return image_pil.resize((target_width, new_height), Image.Resampling.LANCZOS)

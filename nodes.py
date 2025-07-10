@@ -1,7 +1,6 @@
 # Standard library imports
 import os
 import re
-import io
 import uuid
 import json
 import shutil
@@ -24,6 +23,7 @@ import torch
 from google import genai
 from PIL import Image
 from PIL.PngImagePlugin import PngInfo
+from io import BytesIO
 
 # ComfyUI specific imports
 import folder_paths  # type: ignore[import]
@@ -31,7 +31,7 @@ import server  # type: ignore[import]
 from comfy.model_management import InterruptProcessingException  # type: ignore[import]
 
 # Local application imports
-from .funs import AnyType, expand_mask, image2mask, pil2tensor, play_sound, resize_preview, subtract_mask, tensor2pil
+from .funs import AnyType, expand_mask, image2mask, pil2tensor, play_sound, resize_preview, subtract_mask, tensor2pil, tensor_to_bytes
 
 
 any = AnyType("*")
@@ -212,68 +212,112 @@ class SaveStaticImage_JNK:
             return {"ui": {"images": []}, "result": (success,)}
 
 class LoadImageWithCheck_JNK:
-    def __init__(self):
-        self.preview_width = 600
-        
+    def __init__(self):self.preview_width = 600
     @classmethod
     def INPUT_TYPES(s):
         return {
             "required": {
                 "image_path": ("STRING", {"default": "", "multiline": False}),
+                "show_preview": ("BOOLEAN", {"default": True}),
             },
         }
-
     CATEGORY = "🔧 JNK"
     RETURN_TYPES = ("IMAGE", "BOOLEAN", "INT")
     RETURN_NAMES = ("image", "exists", "index")
     FUNCTION = "load_image"
     OUTPUT_NODE = True
 
-    def load_image(self, image_path):
+    def load_image(self, image_path, show_preview):
         try:
-            exists = False
-            index = 2
-            results = []
-            empty_image = torch.zeros((1, 64, 64, 3))
-            
+            exists = False;index = 2;results = [];empty_image = torch.zeros((1, 64, 64, 3))
             if image_path and os.path.exists(image_path):
-                exists = True
-                index = 1
+                exists = True;index = 1
                 try:
                     with Image.open(image_path) as img:
                         i = np.array(img).astype(np.float32) / 255.0
-                        img_preview = Image.fromarray(np.clip(i * 255.0, 0, 255).astype(np.uint8))
-                        
-                        # Resize preview
-                        aspect_ratio = img_preview.width / img_preview.height
-                        new_height = int(self.preview_width / aspect_ratio)
-                        img_preview = img_preview.resize((self.preview_width, new_height), Image.Resampling.LANCZOS)
-                        
-                        preview_path = os.path.join(folder_paths.get_temp_directory(), f"preview_{uuid.uuid4()}.png")
-                        img_preview.save(preview_path)
                         image = torch.from_numpy(i)[None,]
-                        results.append({"filename": os.path.basename(preview_path), "subfolder": "", "type": "temp"})
-                except Exception:
-                    print(f"---JNK---> LoadImageWithCheck_JNK ---> Error loading image: {image_path}")
-                    image = empty_image
-                    exists = False
-                    index = 2
+                        if show_preview:
+                            img_preview = Image.fromarray(np.clip(i * 255.0, 0, 255).astype(np.uint8))
+                            aspect_ratio = img_preview.width / img_preview.height
+                            new_height = int(self.preview_width / aspect_ratio)
+                            img_preview = img_preview.resize((self.preview_width, new_height), Image.Resampling.LANCZOS)
+                            preview_path = os.path.join(folder_paths.get_temp_directory(), f"preview_{uuid.uuid4()}.png")
+                            img_preview.save(preview_path)
+                            results.append({"filename": os.path.basename(preview_path), "subfolder": "", "type": "temp"})
+                except Exception:print(f"---JNK---> LoadImageWithCheck_JNK ---> Error loading image: {image_path}");image = empty_image;exists = False;index = 2
+            else:image = empty_image
+            if show_preview:
+                return {"ui": {"images": results}, "result": (image, exists, index)}
             else:
-                image = empty_image
-
-            return {"ui": {"images": results}, "result": (image, exists, index)}
+                return (image, exists, index)
         except Exception:
             print(f"---JNK---> LoadImageWithCheck_JNK ---> Error processing image: {image_path}")
             return (empty_image, False, 2)
+
+class PrepareImageForAI_JNK:
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+                "required": {
+                    "image": ("IMAGE",),
+                    "max_size": ("INT", {"default": 512, "min": 64, "max": 4096, "step": 64}),
+                    "webp_quality": ("INT", {"default": 80, "min": 1, "max": 100, "step": 1}),
+                    "show_preview": ("BOOLEAN", {"default": True}),
+                },
+            }
+
+    CATEGORY = "🔧 JNK"
+    OUTPUT_NODE = True
+    RETURN_TYPES = ("IMAGE", "INT", "INT", "INT", "STRING")
+    RETURN_NAMES = ("image", "width", "height", "quality", "bytes")
+    FUNCTION = "doit"
+
+    def doit(self, image, max_size=512, webp_quality=80, show_preview=True):
+        print(f"---JNK---> LoadMinmizedImage ---> Started")
+        img = tensor2pil(image)
+        if img.mode in ('RGBA', 'LA'):
+            background = Image.new('RGB', img.size, (255, 255, 255))
+            if img.mode == 'RGBA':background.paste(img, mask=img.split()[-1])
+            else:background.paste(img, mask=img.split()[-1])
+            img = background
+        original_size = img.size
+        if max(original_size) > max_size:
+            ratio = max_size / max(original_size)
+            new_size = (int(original_size[0] * ratio), int(original_size[1] * ratio))
+            img = img.resize(new_size, Image.Resampling.LANCZOS)
+        webp_buffer = BytesIO()
+        img.save(webp_buffer, format='WEBP', quality=webp_quality, method=6)
+        webp_buffer.seek(0)
+        img = Image.open(webp_buffer)
+        res = pil2tensor(img.convert('RGB'))
+        width = img.size[0];height = img.size[1]
+        image_bytes = tensor_to_bytes(res, quality=webp_quality)
+        size_bytes = len(image_bytes)
+        if size_bytes < 1024:size_formatted = f"{size_bytes} B"
+        elif size_bytes < 1024 * 1024:size_formatted = f"{size_bytes / 1024:.1f} KB"
+        else:size_formatted = f"{size_bytes / (1024 * 1024):.1f} MB"
+        results = []
+        if show_preview:
+            preview_path = os.path.join(folder_paths.get_temp_directory(), f"preview_{uuid.uuid4()}.png")
+            preview_image = resize_preview(img, 256)
+            preview_image.save(preview_path)
+            results.append({"filename": os.path.basename(preview_path), "subfolder": "", "type": "temp"})
+        print(f"---JNK---> LoadMinmizedImage ---> Original: {original_size}, Final: {width}x{height}")
+        print(f"---JNK---> LoadMinmizedImage ---> Bytes: {size_bytes}, Size: {size_formatted}")
+        print(f"---JNK---> LoadMinmizedImage ---> Finished")
+        if show_preview:
+            return {"ui": {"images": results}, "result": (res, width, height, webp_quality, size_formatted)}
+        else:
+            return (res, width, height, webp_quality, size_formatted)
+    @classmethod
+    def IS_CHANGED(self, **kwargs):return float("nan")
 
 class ImageFilterLoader_JNK:
     _cached_images = None
     _cached_paths = None
     _cached_params = None
 
-    def __init__(self) -> None:
-        pass
-
+    def __init__(self) -> None:pass
     @classmethod
     def INPUT_TYPES(s) -> Dict[str, Dict[str, Any]]:
         return {
@@ -1262,15 +1306,6 @@ class AskGoogleGemini_JNK:
     FUNCTION = "ask_gemini"
     CATEGORY = "🔧 JNK"
 
-    def tensor_to_bytes(self, tensor):
-        if len(tensor.shape) == 4: tensor = tensor.squeeze(0)
-        tensor = tensor.detach().cpu().numpy()
-        if tensor.dtype != np.uint8: tensor = (tensor * 255).astype(np.uint8)
-        pil_image = Image.fromarray(tensor)
-        img_byte_arr = io.BytesIO()
-        pil_image.save(img_byte_arr, format='PNG')
-        return img_byte_arr.getvalue()
-
     def get_temp_file_path(self, model):
         temp_dir = os.path.join(os.path.dirname(__file__), "temp")
         if not os.path.exists(temp_dir):os.makedirs(temp_dir)
@@ -1302,7 +1337,7 @@ class AskGoogleGemini_JNK:
             contents = [prompt]
             if image is not None:
                 print(f"---JNK---> AskGoogleGemini ---> Image added")
-                image_bytes = self.tensor_to_bytes(image)
+                image_bytes = tensor_to_bytes(image)
                 image_part = genai.types.Part.from_bytes(data=image_bytes, mime_type='image/png')
                 contents.append(image_part)
             response = client.models.generate_content(model=model, contents=contents)

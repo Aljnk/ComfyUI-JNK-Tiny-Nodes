@@ -11,6 +11,7 @@ NODE_CLASS_MAPPINGS = {
     ## Image
     "Save Static Image JNK":SaveStaticImage_JNK,
     "Load Image if Exist JNK":LoadImageWithCheck_JNK,
+    "Prepare Image for AI JNK":PrepareImageForAI_JNK,
     "Image Filter Loader JNK":ImageFilterLoader_JNK,
     "Stroke RGBA Image JNK":StrokeImage_JNK,
     "Create RGBA Image JNK":AlphaImageNode_JNK,
@@ -51,6 +52,7 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     ## Image
     "SaveStaticImage_JNK":"Save Static Image",
     "LoadImageWithCheck_JNK":"Load Image if Exist",
+    "PrepareImageForAI_JNK":"Prepare Image for AI",
     "ImageFilterLoader_JNK":"Image Filter Loader",
     "StrokeImage_JNK":"Stroke RGBA Image",
     "AlphaImageNode_JNK":"Create RGBA Image",
@@ -79,4 +81,5 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "AskGoogleGemini_JNK":"Ask Google Gemini",
 }
 
+WEB_DIRECTORY = "./web/js"
 __all__ = ["NODE_CLASS_MAPPINGS", "NODE_DISPLAY_NAME_MAPPINGS"]
