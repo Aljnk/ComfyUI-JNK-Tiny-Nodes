@@ -1361,7 +1361,7 @@ class GetGeminiKeys_JNK:
             with open(file_path, 'r', encoding='utf-8') as file:
                 lines = file.readlines()
                 for i in range(min(5, len(lines))):
-                    key = lines[i].strip().lower()
+                    key = lines[i].strip()
                     keys[i] = key
         except:print(f"---JNK---> JNKGeminiKeys ---> Error (LK) ---> Unable to read keys from file: {file_path}");pass
         return tuple(keys)

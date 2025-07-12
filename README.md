@@ -41,9 +41,14 @@ pip install google-genai
 ### v1.1.0 (July 8, 2025)
 - Added "Ask Google Gemini" node for text and image AI processing
 
+<details>
+<summary>Show older updates</summary>
+
 ### v1.0.0 (June 4, 2025)
 - Initial release
 - 25+ custom nodes
+
+</details>
 
 
 ## 📋 Nodes
