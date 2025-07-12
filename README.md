@@ -32,6 +32,9 @@ pip install google-genai
 
 ## 🔄 Changelog
 
+### v1.1.2 (July 12, 2025)
+- Added 2 utility nodes to enhance "Ask Google Gemini" workflow.
+
 ### v1.1.1 (July 10, 2025)
 - Added "Prepare Image for AI" node for optimizing images before sending to AI models (token saving)
 
@@ -103,8 +106,10 @@ pip install google-genai
 
 ### API
 - **Ask Google Gemini** - Send a text prompt (with an optional image) to the Google Gemini AI model. When the RPM is greater than 0, the node will pause between requests to maximize request throughput while staying within rate limits. Get a [free API key](https://aistudio.google.com/apikey). [Available models](https://ai.google.dev/gemini-api/docs/models). [Free tier RPM limits](https://ai.google.dev/gemini-api/docs/rate-limits#free-tier).
+- **Get Gemini Keys** - Load up to 5 Google Gemini API keys from a text file. Each key should be on a separate line. Useful for rotating between multiple API keys to manage rate limits.
+- **Get Gemini Models** - Configure and manage different Gemini models (Pro, Flash, Light) with their respective RPM (requests per minute) settings.
 
-<div align="center"><img src="images/api.jpg" alt="API Nodes" width="250" /></div>
+<div align="center"><img src="images/api.jpg" alt="API Nodes" width="370" /></div>
 
 
 ## 📄 License

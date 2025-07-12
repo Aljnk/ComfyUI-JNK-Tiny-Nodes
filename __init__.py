@@ -38,6 +38,8 @@ NODE_CLASS_MAPPINGS = {
     "Create Folder JNK":CreateFolder_JNK,
     ## API
     "Ask Google Gemini JNK":AskGoogleGemini_JNK,
+    "Get Gemini Keys JNK":GetGeminiKeys_JNK,
+    "Get Gemini Models JNK":GetGeminiModels_JNK,
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
@@ -79,6 +81,8 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "CreateFolder_JNK":"Create Folder",
     ## API
     "AskGoogleGemini_JNK":"Ask Google Gemini",
+    "GetGeminiKeys_JNK":"Get Gemini Keys",
+    "GetGeminiModels_JNK":"Get Gemini Models",
 }
 
 WEB_DIRECTORY = "./web/js"

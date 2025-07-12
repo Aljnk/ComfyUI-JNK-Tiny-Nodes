@@ -1088,6 +1088,7 @@ class JoinStrings_JNK:
     CATEGORY = "🔧 JNK"
 
     def join_strings(self, string1, string2, string3, string4, string5, delimiter):
+        delimiter = delimiter.replace('\\n', '\n').replace('\\t', '\t').replace('\\r', '\r')
         strings = [s for s in [string1, string2, string3, string4, string5] if s]
         result = delimiter.join(strings)
         return (result,)
@@ -1306,33 +1307,34 @@ class AskGoogleGemini_JNK:
     FUNCTION = "ask_gemini"
     CATEGORY = "🔧 JNK"
 
-    def get_temp_file_path(self, model):
+    def get_temp_file_path(self, model, api_key):
         temp_dir = os.path.join(os.path.dirname(__file__), "temp")
         if not os.path.exists(temp_dir):os.makedirs(temp_dir)
-        safe_model_name = model.replace("-", "_").replace(".", "_")
-        return os.path.join(temp_dir, f"jnk_gemini_last_request_{safe_model_name}.txt")
+        combined_string = f"{model}_{api_key}"
+        file_hash = hashlib.md5(combined_string.encode()).hexdigest()[:13]
+        return os.path.join(temp_dir, f"jnk_gemini_last_request_{file_hash}.txt")
 
-    def get_last_request_time(self, model):
-        file_path = self.get_temp_file_path(model)
+    def get_last_request_time(self, model, api_key):
+        file_path = self.get_temp_file_path(model, api_key)
         try: return float(open(file_path, 'r').read().strip()) if os.path.exists(file_path) else 0
         except:print(f"---JNK---> AskGoogleGemini ---> Error (GLRT) ---> Unable to read temp file: {file_path}");return 0
 
-    def set_last_request_time(self, current_time, model):
-        file_path = self.get_temp_file_path(model)
+    def set_last_request_time(self, current_time, model, api_key):
+        file_path = self.get_temp_file_path(model, api_key)
         try:
             with open(file_path, 'w') as f:f.write(str(current_time))
         except:print(f"---JNK---> AskGoogleGemini ---> Error (SLRT) ---> Unable to write temp file: {file_path}")
 
-    def handle_rpm_limit(self, rpm, model):
+    def handle_rpm_limit(self, rpm, model, api_key):
         if rpm <= 0:return
-        time_to_wait = math.ceil(60 / rpm) + 0.1 - time.time() + self.get_last_request_time(model)
+        time_to_wait = math.ceil(60 / rpm) + 0.1 - time.time() + self.get_last_request_time(model, api_key)
         if time_to_wait > 0: print(f"---JNK---> AskGoogleGemini ---> RPM Pause ({time_to_wait:.2f} sec.)");time.sleep(time_to_wait)
-        self.set_last_request_time(time.time(), model)
+        self.set_last_request_time(time.time(), model, api_key)
 
     def ask_gemini(self, api_key, model, prompt, rpm, image=None):
         print(f"---JNK---> AskGoogleGemini ---> Started")
         try:
-            self.handle_rpm_limit(rpm, model)
+            self.handle_rpm_limit(rpm, model, api_key)
             client = genai.Client(api_key=api_key)
             contents = [prompt]
             if image is not None:
@@ -1344,3 +1346,44 @@ class AskGoogleGemini_JNK:
             print(f"---JNK---> AskGoogleGemini ---> Finished")
             return (response.text,)
         except Exception as e:print(f"---JNK---> AskGoogleGemini ---> Error (AG): {str(e)}");return (f"Error: {str(e)}",)
+
+class GetGeminiKeys_JNK:
+    def __init__(self):pass
+    @classmethod
+    def INPUT_TYPES(cls):return {"required": {"file_path": ("STRING", {"default": "", "multiline": False}),}}
+    RETURN_TYPES = ("STRING", "STRING", "STRING", "STRING", "STRING")
+    RETURN_NAMES = ("key_1", "key_2", "key_3", "key_4", "key_5")
+    FUNCTION = "load_keys"
+    CATEGORY = "🔧 JNK"
+    def load_keys(self, file_path=""):
+        keys = [""] * 5
+        try:
+            with open(file_path, 'r', encoding='utf-8') as file:
+                lines = file.readlines()
+                for i in range(min(5, len(lines))):
+                    key = lines[i].strip().lower()
+                    keys[i] = key
+        except:print(f"---JNK---> JNKGeminiKeys ---> Error (LK) ---> Unable to read keys from file: {file_path}");pass
+        return tuple(keys)
+    
+class GetGeminiModels_JNK:
+    def __init__(self):pass
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {},
+            "optional": {
+                "pro": ("STRING", {"default": "gemini-2.5-pro", "multiline": False}),
+                "pro_rpm": ("INT", {"default": 5, "min": 0, "max": 1000}),
+                "flash": ("STRING", {"default": "gemini-2.5-flash", "multiline": False}),
+                "flash_rpm": ("INT", {"default": 10, "min": 0, "max": 1000}),
+                "light": ("STRING", {"default": "", "multiline": False}),
+                "light_rpm": ("INT", {"default": 15, "min": 0, "max": 1000}),
+            }
+        }
+    RETURN_TYPES = ("STRING", "INT", "STRING", "INT", "STRING", "INT")
+    RETURN_NAMES = ("pro", "pro_rpm", "flash", "flash_rpm", "light", "light_rpm")
+    FUNCTION = "store_keys"
+    CATEGORY = "🔧 JNK"
+    def store_keys(self, pro="gemini-2.5-pro", pro_rpm=5, flash="gemini-2.5-flash",flash_rpm=10, light="", light_rpm=15):
+        return (pro, pro_rpm, flash, flash_rpm, light, light_rpm)
