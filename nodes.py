@@ -5,6 +5,7 @@ import uuid
 import json
 import shutil
 import hashlib
+import codecs
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Tuple, Union
@@ -1092,6 +1093,32 @@ class JoinStrings_JNK:
         strings = [s for s in [string1, string2, string3, string4, string5] if s]
         result = delimiter.join(strings)
         return (result,)
+    
+
+class SplitString_JNK:
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "text": ("STRING", {"multiline": True}),
+                "delimiter": ("STRING", {"default": ","}),
+                "start_index": ("INT", {"default": 0, "min": 0, "max": 1000}),
+                "skip_every": ("INT", {"default": 0, "min": 0, "max": 10}),
+                "max_count": ("INT", {"default": 100, "min": 1, "max": 1000}),
+            }
+        }
+    RETURN_TYPES = ("STRING",)
+    RETURN_NAMES = ("text_list",)
+    FUNCTION = "split_text"
+    OUTPUT_IS_LIST = (True,)
+    CATEGORY = "🔧 JNK"
+    def split_text(self, text, delimiter, start_index, skip_every, max_count):
+        if delimiter == "":arr = [text.strip()]
+        else:
+            delimiter = codecs.decode(delimiter, 'unicode_escape')
+            arr = [line.strip() for line in text.split(delimiter) if line.strip()]
+        arr = arr[start_index:start_index + max_count * (skip_every + 1):(skip_every + 1)]
+        return (arr,)
 
 class GetTimestamp_JNK:
     def __init__(self): pass

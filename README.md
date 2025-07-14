@@ -32,17 +32,20 @@ pip install google-genai
 
 ## 🔄 Changelog
 
+### v1.1.3 (July 14, 2025)
+- Added "Split String" node for advanced text splitting. Fixed minor bugs
+
 ### v1.1.2 (July 12, 2025)
 - Added 2 utility nodes to enhance "Ask Google Gemini" workflow.
 
 ### v1.1.1 (July 10, 2025)
 - Added "Prepare Image for AI" node for optimizing images before sending to AI models (token saving)
 
-### v1.1.0 (July 8, 2025)
-- Added "Ask Google Gemini" node for text and image AI processing
-
 <details>
 <summary>Show older updates</summary>
+
+### v1.1.0 (July 8, 2025)
+- Added "Ask Google Gemini" node for text and image AI processing
 
 ### v1.0.0 (June 4, 2025)
 - Initial release
@@ -91,6 +94,7 @@ pip install google-genai
 - **Text to Key** - Convert text to key. Cuts beginning and end of text to create keys from these parts.
 - **Text to MD5** - Generate MD5 hashes from text for unique identifiers.
 - **Join Strings** - Concatenate multiple strings with custom delimiters. Text can be written directly in the node.
+- **Split String** - Split text by delimiter with start position, skip patterns, and count limits.
 - **Get Timestamp** - Generate current timestamp strings for file naming.
 
 <div align="center"><img src="images/texts.jpg" alt="Text Nodes" width="830" /></div>

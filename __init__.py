@@ -27,6 +27,7 @@ NODE_CLASS_MAPPINGS = {
     "Text to Key JNK":Model2Key_JNK,
     "Text to MD5 JNK":Text2MD5_JNK,
     "Join Strings JNK":JoinStrings_JNK,
+    "Split String JNK":SplitString_JNK,
     "Get Timestamp JNK":GetTimestamp_JNK,
     ## Logic
     "Switch Integer JNK":SwitchInt_JNK,
@@ -70,6 +71,7 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "Model2Key_JNK":"Text to Key",
     "Text2MD5_JNK":"Text to MD5",
     "JoinStrings_JNK":"Join Strings",
+    "SplitString_JNK":"Split String",
     "GetTimestamp_JNK":"Get Timestamp",
     ## Logic
     "SwitchInt_JNK":"Switch (Integer)",
