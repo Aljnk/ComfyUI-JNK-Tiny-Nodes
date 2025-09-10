@@ -32,24 +32,31 @@ pip install google-genai
 
 ## 🔄 Changelog
 
+### v1.1.4 (September 10, 2025)
+- Added "ToonOut Remove BG" node - advanced background removal using fine-tuned BiRefNet model.
+- Model file: `birefnet_finetuned_toonout.pth`
+- Download: [HuggingFace - joelseytre/toonout](https://huggingface.co/joelseytre/toonout/blob/main/birefnet_finetuned_toonout.pth)
+- Installation: Place model file in `ComfyUI/models/RMBG/ToonOut/` folder
+- Example workflow included in `example_workflows/01_ToonOut.json`
+
 ### v1.1.3 (July 14, 2025)
-- Added "Split String" node for advanced text splitting. Fixed minor bugs
+- Added "Split String" node for advanced text splitting. Fixed minor bugs.
 
 ### v1.1.2 (July 12, 2025)
 - Added 2 utility nodes to enhance "Ask Google Gemini" workflow.
 
-### v1.1.1 (July 10, 2025)
-- Added "Prepare Image for AI" node for optimizing images before sending to AI models (token saving)
-
 <details>
 <summary>Show older updates</summary>
 
+### v1.1.1 (July 10, 2025)
+- Added "Prepare Image for AI" node for optimizing images before sending to AI models (token saving).
+
 ### v1.1.0 (July 8, 2025)
-- Added "Ask Google Gemini" node for text and image AI processing
+- Added "Ask Google Gemini" node for text and image AI processing.
 
 ### v1.0.0 (June 4, 2025)
-- Initial release
-- 25+ custom nodes
+- Initial release.
+- 25+ custom nodes.
 
 </details>
 
@@ -79,6 +86,7 @@ pip install google-genai
 - **Add Layer Overlay** - Composite layers with positioning, rotation and opacity control.
 - **Get One Alpha Layer** - Extract the largest alpha region from images.
 - **Get All Alpha Layers** - Extract all significant alpha regions while preserving smaller details.
+- **ToonOut Remove BG** - Advanced background removal using fine-tuned BiRefNet model. 
 
 <div align="center"><img src="images/images.jpg" alt="Image Nodes" width="830" /></div>
 
@@ -119,6 +127,18 @@ pip install google-genai
 - **Get Gemini Models** - Configure and manage different Gemini models (Pro, Flash, Light) with their respective RPM (requests per minute) settings.
 
 <div align="center"><img src="images/api.jpg" alt="API Nodes" width="370" /></div>
+
+
+## ⚙️ Special Requirements
+
+### ToonOut Remove BG
+**Requirements:**
+- Model file: `birefnet_finetuned_toonout.pth`
+- Download: [HuggingFace - joelseytre/toonout](https://huggingface.co/joelseytre/toonout/blob/main/birefnet_finetuned_toonout.pth)
+- Installation: Place model file in `ComfyUI/models/RMBG/ToonOut/` folder
+
+**Example Workflow:**
+<div align="center"><img src="example_workflows/01_WF_ToonOut.png" alt="ToonOut Remove BG Workflow" width="830" /></div>
 
 
 ## 📄 License

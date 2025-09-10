@@ -825,6 +825,142 @@ class GetAllAlphaLayers_JNK:
         
         return combined_rgb, combined_mask, combined_rgba
 
+class ToonOutRemoveBG_JNK:
+    _model = None
+    _device = None
+    _model_cache = {}
+    
+    def __init__(self): pass
+
+    @classmethod
+    def get_rmbg_models(cls):
+        rmbg_path = os.path.join(folder_paths.models_dir, "RMBG")
+        models = []
+        if os.path.exists(rmbg_path):
+            for root, dirs, files in os.walk(rmbg_path):
+                for file in files:
+                    if file.endswith(('.pth', '.pt', '.bin', '.safetensors')):
+                        rel_path = os.path.relpath(os.path.join(root, file), rmbg_path)
+                        models.append(rel_path)
+        return models if models else ["birefnet_finetuned_toonout.pth"]
+
+    @classmethod
+    def parse_hex_color(cls, hex_color):
+        try:
+            if hex_color.startswith('#'): hex_color = hex_color[1:]
+            if len(hex_color) == 6: return tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
+            elif len(hex_color) == 3: return tuple(int(hex_color[i]*2, 16) for i in range(3))
+            else: raise ValueError("Invalid hex length")
+        except: return None
+
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "image": ("IMAGE",),
+                "model_name": (cls.get_rmbg_models(),),
+                "background_type": (["white", "black", "custom"],),
+                "custom_color": ("STRING", {"default": "#FFFFFF"}),
+            }
+        }
+
+    RETURN_TYPES = ("IMAGE", "IMAGE", "MASK")
+    RETURN_NAMES = ("rgba", "rgb", "mask")
+    FUNCTION = "remove_background"
+    CATEGORY = "🔧 JNK"
+
+    @classmethod
+    def load_model(cls, model_name):
+        if model_name in cls._model_cache: return cls._model_cache[model_name]
+        try:
+            import transformers.configuration_utils
+            original_getattribute = transformers.configuration_utils.PretrainedConfig.__getattribute__
+            def patched_getattribute(self, key):
+                if key == 'is_encoder_decoder': return False
+                return original_getattribute(self, key)
+            transformers.configuration_utils.PretrainedConfig.__getattribute__ = patched_getattribute
+            
+            from transformers import AutoModelForImageSegmentation
+            model = AutoModelForImageSegmentation.from_pretrained("ZhengPeng7/BiRefNet", trust_remote_code=True)
+            
+            full_path = os.path.join(folder_paths.models_dir, "RMBG", model_name)
+            if not os.path.exists(full_path):
+                print(f"---JNK---> ToonOutRemoveBG_JNK ---> Model not found: {full_path}")
+                return None
+                
+            state_dict = torch.load(full_path, map_location='cpu')
+            clean_state_dict = {}
+            for k, v in state_dict.items():
+                if k.startswith("module._orig_mod."): clean_state_dict[k[len("module._orig_mod."):]] = v
+                elif k.startswith("module."): clean_state_dict[k[len("module."):]] = v
+                else: clean_state_dict[k] = v
+            
+            model.load_state_dict(clean_state_dict)
+            device = "cuda" if torch.cuda.is_available() else "cpu"
+            model = model.to(device)
+            cls._model_cache[model_name] = model
+            print(f"---JNK---> ToonOutRemoveBG_JNK ---> Model {model_name} loaded on {device}")
+            return model
+        except Exception as e:
+            print(f"---JNK---> ToonOutRemoveBG_JNK ---> Error loading model: {str(e)}")
+            return None
+
+    def remove_background(self, image, model_name, background_type, custom_color):
+        try:
+            from torchvision import transforms
+            model = self.load_model(model_name)
+            if model is None: return (image, image, torch.zeros((1, 64, 64)))
+            
+            if background_type == "white": bg_color = (255, 255, 255)
+            elif background_type == "black": bg_color = (0, 0, 0)
+            else:
+                bg_color = self.parse_hex_color(custom_color)
+                if bg_color is None:
+                    print(f"---JNK---> ToonOutRemoveBG_JNK ---> Invalid hex color: {custom_color}, using white background")
+                    bg_color = (255, 255, 255)
+            
+            device = "cuda" if torch.cuda.is_available() else "cpu"
+            transform = transforms.Compose([
+                transforms.Resize((1024, 1024)),
+                transforms.ToTensor(),
+                transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+            ])
+            
+            rgba_results = []
+            rgb_results = []
+            mask_results = []
+            
+            for img_tensor in image:
+                img_pil = tensor2pil(img_tensor).convert('RGB')
+                original_size = img_pil.size
+                input_tensor = transform(img_pil).unsqueeze(0).to(device)
+                
+                with torch.no_grad(): preds = model(input_tensor)[-1].sigmoid().cpu()
+                
+                mask_pil = transforms.ToPILImage()(preds[0].squeeze()).resize(original_size)
+                
+                rgba_img = img_pil.copy()
+                rgba_img.putalpha(mask_pil)
+                rgba_results.append(pil2tensor(rgba_img))
+                
+                rgb_bg = Image.new('RGB', original_size, bg_color)
+                rgb_img = Image.composite(img_pil, rgb_bg, mask_pil)
+                rgb_results.append(pil2tensor(rgb_img))
+                
+                mask_tensor = pil2tensor(mask_pil.convert('L'))
+                mask_results.append(mask_tensor.squeeze(0).squeeze(-1))
+            
+            rgba_batch = torch.cat(rgba_results, dim=0)
+            rgb_batch = torch.cat(rgb_results, dim=0)
+            mask_batch = torch.stack(mask_results, dim=0)
+            
+            return (rgba_batch, rgb_batch, mask_batch)
+        except Exception as e:
+            print(f"---JNK---> ToonOutRemoveBG_JNK ---> Error: {str(e)}")
+            empty_mask = torch.zeros((image.shape[0], image.shape[1], image.shape[2]))
+            return (image, image, empty_mask)
+
+
 ## Upscale
 class TopazPhotoAI_JNK:
     # cd C:\Program Files\Topaz Labs LLC\Topaz Photo AI

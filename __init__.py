@@ -18,6 +18,7 @@ NODE_CLASS_MAPPINGS = {
     "Add Layer Overlay JNK":AddLayerOverlay_JNK,
     "Get One Alpha Layer JNK":GetAlphaLayers_JNK,
     "Get All Alpha Layers JNK":GetAllAlphaLayers_JNK,
+    "ToonOut Remove BG JNK":ToonOutRemoveBG_JNK,
     ## Upscale
     'Topaz Photo Upscaler (Autopilot) JNK':TopazPhotoAI_JNK,
     ## Text
@@ -62,6 +63,7 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "AddLayerOverlay_JNK":"Add Layer Overlay",
     "GetAlphaLayers_JNK":"Get One Alpha Layer",
     "GetAllAlphaLayers_JNK":"Get All Alpha Layers",
+    "ToonOutRemoveBG_JNK":"ToonOut Remove BG",
     ## Upscale
     'TopazPhotoAI_JNK':'Topaz Photo Upscaler',
     ## Text
